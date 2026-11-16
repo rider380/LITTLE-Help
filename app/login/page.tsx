@@ -1,20 +1,46 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
+  const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [isError, setIsError] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  function handleLogin(e: React.FormEvent<HTMLFormElement>) {
+  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    alert("Login system will be connected to secure authentication soon.");
+    setMessage("");
+    setIsError(false);
+    setLoading(true);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password: password,
+    });
+
+    setLoading(false);
+
+    if (error) {
+      setIsError(true);
+      setMessage(error.message);
+      return;
+    }
+
+    router.push("/dashboard");
+    router.refresh();
   }
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-orange-50 px-5 py-12">
       <div className="w-full max-w-md">
+
         <a
           href="/"
           className="mb-8 block text-center text-3xl font-bold text-emerald-700"
@@ -23,6 +49,7 @@ export default function LoginPage() {
         </a>
 
         <div className="rounded-3xl border border-gray-100 bg-white p-8 shadow-xl sm:p-10">
+
           <div className="text-center">
             <div className="text-5xl">🤝</div>
 
@@ -36,6 +63,7 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleLogin} className="mt-8 space-y-5">
+
             <div>
               <label className="mb-2 block text-sm font-semibold text-gray-700">
                 Email Address
@@ -75,12 +103,27 @@ export default function LoginPage() {
               </a>
             </div>
 
+            {message && (
+              <div
+                role="alert"
+                className={`rounded-xl p-3 text-sm ${
+                  isError
+                    ? "bg-red-50 text-red-700"
+                    : "bg-emerald-50 text-emerald-800"
+                }`}
+              >
+                {message}
+              </div>
+            )}
+
             <button
               type="submit"
-              className="w-full rounded-xl bg-emerald-700 py-3.5 font-bold text-white transition hover:bg-emerald-800"
+              disabled={loading}
+              className="w-full rounded-xl bg-emerald-700 py-3.5 font-bold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Login →
+              {loading ? "Logging in..." : "Login →"}
             </button>
+
           </form>
 
           <div className="my-7 flex items-center gap-4">
@@ -98,6 +141,7 @@ export default function LoginPage() {
               Create Account
             </a>
           </p>
+
         </div>
 
         <a
@@ -106,6 +150,7 @@ export default function LoginPage() {
         >
           ← Back to Home
         </a>
+
       </div>
     </main>
   );
